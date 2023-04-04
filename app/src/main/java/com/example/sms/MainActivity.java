@@ -16,8 +16,10 @@ import android.provider.ContactsContract;
 import android.telephony.SmsManager;
 import android.view.View;
 import android.widget.ArrayAdapter;
+import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.TimePicker;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -34,6 +36,15 @@ public class MainActivity extends AppCompatActivity {
 
     private List<String> contactNames;
     private Spinner contactSpinner;
+    private int day;
+    private int month;
+    private int year;
+    private int hour;
+    private int minute;
+
+    private TimePicker timePicker;
+
+    private DatePicker datePicker;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,6 +55,10 @@ public class MainActivity extends AppCompatActivity {
 
         phoneNumberEditText = findViewById(R.id.editTextPhone);
         message = findViewById(R.id.editTextMessage);
+        timePicker = findViewById(R.id.timePicker);
+        datePicker = findViewById(R.id.datePicker);
+
+
 
         // Request the SEND_SMS permission at runtime if necessary
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS)
@@ -79,6 +94,13 @@ public class MainActivity extends AppCompatActivity {
     public void sendSMS(View view) {
         String messageToSend = message.getText().toString();
         String number = phoneNumberEditText.getText().toString();
+        day = datePicker.getDayOfMonth();
+        month = datePicker.getMonth() + 1; //seems to be a library problem that it is giving a month earlier as output so add 1 for the real month
+        year = datePicker.getYear();
+        hour = timePicker.getCurrentHour();
+        minute = timePicker.getCurrentMinute();
+        System.out.println(minute + " " + hour + " " + day + " " + month + " " + year);
+
 
         if (number.isEmpty()) {
             // Get the selected contact from the Spinner
