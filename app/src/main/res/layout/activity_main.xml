@@ -43,4 +43,9 @@
         android:ems="10"
         android:inputType="time" />
 
+    <Spinner
+        android:id="@+id/contact_spinner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
 </LinearLayout>

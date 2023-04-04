@@ -1,32 +1,48 @@
 package com.example.sms;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.telephony.SmsManager;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.Spinner;
 import android.widget.Toast;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
     private static final int SMS_PERMISSION_CODE = 123;
+    private static final int CONTACTS_PERMISSION_CODE = 124;
+    private static final int PICK_CONTACT_REQUEST = 1;
 
     private EditText phoneNumberEditText;
-
     private EditText message;
+
+    private List<String> contactNames;
+    private Spinner contactSpinner;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        phoneNumberEditText = findViewById(R.id.editTextPhone);
+        contactNames = new ArrayList<>();
 
+        phoneNumberEditText = findViewById(R.id.editTextPhone);
         message = findViewById(R.id.editTextMessage);
 
         // Request the SEND_SMS permission at runtime if necessary
@@ -35,26 +51,108 @@ public class MainActivity extends AppCompatActivity {
             ActivityCompat.requestPermissions(this,
                     new String[]{Manifest.permission.SEND_SMS}, SMS_PERMISSION_CODE);
         }
+
+        Cursor cursor = getContentResolver().query(ContactsContract.Contacts.CONTENT_URI, null, null, null, null);
+        if (cursor != null && cursor.moveToFirst()) {
+            do {
+                @SuppressLint("Range") String contactName = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
+                contactNames.add(contactName);
+            } while (cursor.moveToNext());
+            cursor.close();
+        }
+
+        // Request the READ_CONTACTS permission at runtime if necessary
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.READ_CONTACTS}, CONTACTS_PERMISSION_CODE);
+        }
+
+        // Populate the Spinner with the list of contact names
+        contactSpinner = findViewById(R.id.contact_spinner);
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, contactNames);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        contactSpinner.setAdapter(adapter);
     }
 
+    @SuppressLint("Range")
     public void sendSMS(View view) {
         String messageToSend = message.getText().toString();
         String number = phoneNumberEditText.getText().toString();
 
+        if (number.isEmpty()) {
+            // Get the selected contact from the Spinner
+            String selectedContact = contactSpinner.getSelectedItem().toString();
+
+            // Query the Contacts content provider for the selected contact's phone number
+            Cursor cursor = getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                    new String[]{ContactsContract.CommonDataKinds.Phone.NUMBER},
+                    ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME + " = ?",
+                    new String[]{selectedContact},
+                    null);
+
+            // If a phone number is found, set it as the number to send the SMS to
+            if (cursor != null && cursor.moveToFirst()) {
+                number = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+            }
+
+            // Close the cursor if it's not null
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+
+        // Send the SMS using the obtained phone number and message
         SmsManager smsManager = SmsManager.getDefault();
         smsManager.sendTextMessage(number, null, messageToSend, null, null);
 
         Toast.makeText(getApplicationContext(), "Message sent to " + number + ": " + messageToSend, Toast.LENGTH_LONG).show();
     }
 
+
+    public void pickContact(View view) {
+        Intent pickContactIntent = new Intent(Intent.ACTION_PICK, ContactsContract.CommonDataKinds.Phone.CONTENT_URI);
+        startActivityForResult(pickContactIntent, PICK_CONTACT_REQUEST);
+    }
+
     @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == SMS_PERMISSION_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 Toast.makeText(getApplicationContext(), "SMS permission granted", Toast.LENGTH_SHORT).show();
             } else {
                 Toast.makeText(getApplicationContext(), "SMS permission denied", Toast.LENGTH_SHORT).show();
+            }
+        } else if (requestCode == CONTACTS_PERMISSION_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(getApplicationContext(), "Contacts permission granted", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(getApplicationContext(), "Contacts permission denied", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == PICK_CONTACT_REQUEST && resultCode == RESULT_OK) {
+            Uri contactUri = data.getData();
+
+            String[] projection = {ContactsContract.CommonDataKinds.Phone.NUMBER};
+            Cursor cursor = getContentResolver().query(contactUri, projection, null, null, null);
+
+            if (cursor != null && cursor.moveToFirst()) {
+                int numberIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER);
+                String number = cursor
+                        .getString(numberIndex);
+
+                phoneNumberEditText.setText(number);
+            }
+
+            if (cursor != null) {
+                cursor.close();
             }
         }
     }
