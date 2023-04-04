@@ -7,10 +7,10 @@ This app will help you schedule messages to be sent to your contacts on a specif
 # Features Currently
 - It can send message to a specific phone number
 
+- Sync contacts from phone
+
 # Features that will be added
 - Schedule Messages on a specific date
-
-- Sync contacts from phone
 
 - Allow attachments/images to be sent with messages
 
