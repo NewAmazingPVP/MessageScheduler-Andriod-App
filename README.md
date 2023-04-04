@@ -16,6 +16,8 @@ This app will help you schedule messages to be sent to your contacts on a specif
 
 - Send notifications before schedule message is sent
 
+- Repeat Intervals 
+
 - And a lot more...
 
 # Contributions
