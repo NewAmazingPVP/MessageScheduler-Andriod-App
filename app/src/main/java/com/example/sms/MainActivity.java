@@ -7,9 +7,12 @@ import androidx.core.content.ContextCompat;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.icu.util.Calendar;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
@@ -30,10 +33,8 @@ public class MainActivity extends AppCompatActivity {
     private static final int SMS_PERMISSION_CODE = 123;
     private static final int CONTACTS_PERMISSION_CODE = 124;
     private static final int PICK_CONTACT_REQUEST = 1;
-
     private EditText phoneNumberEditText;
     private EditText message;
-
     private List<String> contactNames;
     private Spinner contactSpinner;
     private int day;
@@ -41,9 +42,7 @@ public class MainActivity extends AppCompatActivity {
     private int year;
     private int hour;
     private int minute;
-
     private TimePicker timePicker;
-
     private DatePicker datePicker;
 
     @Override
@@ -57,8 +56,6 @@ public class MainActivity extends AppCompatActivity {
         message = findViewById(R.id.editTextMessage);
         timePicker = findViewById(R.id.timePicker);
         datePicker = findViewById(R.id.datePicker);
-
-
 
         // Request the SEND_SMS permission at runtime if necessary
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS)
@@ -95,12 +92,10 @@ public class MainActivity extends AppCompatActivity {
         String messageToSend = message.getText().toString();
         String number = phoneNumberEditText.getText().toString();
         day = datePicker.getDayOfMonth();
-        month = datePicker.getMonth() + 1; //seems to be a library problem that it is giving a month earlier as output so add 1 for the real month
+        month = datePicker.getMonth();
         year = datePicker.getYear();
         hour = timePicker.getCurrentHour();
         minute = timePicker.getCurrentMinute();
-        System.out.println(minute + " " + hour + " " + day + " " + month + " " + year);
-
 
         if (number.isEmpty()) {
             // Get the selected contact from the Spinner
@@ -117,19 +112,31 @@ public class MainActivity extends AppCompatActivity {
             if (cursor != null && cursor.moveToFirst()) {
                 number = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
             }
-
+            
             // Close the cursor if it's not null
             if (cursor != null) {
                 cursor.close();
             }
         }
 
-        // Send the SMS using the obtained phone number and message
-        SmsManager smsManager = SmsManager.getDefault();
-        smsManager.sendTextMessage(number, null, messageToSend, null, null);
+        // Get the time in milliseconds for the selected date and time
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(year, month, day, hour, minute);
+        long timeInMillis = calendar.getTimeInMillis();
 
-        Toast.makeText(getApplicationContext(), "Message sent to " + number + ": " + messageToSend, Toast.LENGTH_LONG).show();
+        // Schedule the SMS using the obtained phone number and message
+        Intent intent = new Intent(getApplicationContext(), SmsBroadcastReceiver.class);
+        intent.putExtra("phone", number);
+        intent.putExtra("message", messageToSend);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(getApplicationContext(), 0, intent, PendingIntent.FLAG_MUTABLE);
+
+        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+        alarmManager.set(AlarmManager.RTC_WAKEUP, timeInMillis, pendingIntent);
+
+        Toast.makeText(getApplicationContext(), "Message scheduled for " + day + "/" + (month + 1) + "/" + year + " at " + hour + ":" + minute, Toast.LENGTH_LONG).show();
     }
+
+
 
 
     public void pickContact(View view) {
@@ -167,8 +174,7 @@ public class MainActivity extends AppCompatActivity {
 
             if (cursor != null && cursor.moveToFirst()) {
                 int numberIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER);
-                String number = cursor
-                        .getString(numberIndex);
+                String number = cursor.getString(numberIndex);
 
                 phoneNumberEditText.setText(number);
             }
