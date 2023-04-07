@@ -18,26 +18,18 @@
             android:onClick="sendSMS"
             android:text="Send Message" />
 
-        <EditText
-            android:id="@+id/editTextPhone"
-            android:layout_width="368dp"
-            android:layout_height="wrap_content"
-            android:ems="10"
-            android:inputType="phone"
-            android:hint="Enter # or Select Contact" />
+        <Spinner
+            android:id="@+id/contact_spinner"
+            android:layout_width="match_parent"
+            android:layout_height="44dp" />
 
         <EditText
             android:id="@+id/editTextMessage"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:ems="10"
-            android:inputType="textPersonName"
-            android:hint="Enter Message" />
-
-        <Spinner
-            android:id="@+id/contact_spinner"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:hint="Enter Message"
+            android:inputType="textPersonName" />
 
         <TimePicker
             android:id="@+id/timePicker"
