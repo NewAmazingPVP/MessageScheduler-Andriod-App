@@ -5,13 +5,11 @@ An Android app that schedules and automatically sends messages
 This app will help you schedule messages to be sent to your contacts on a specific date. For example, if you have to send birthday wishes or festival wishes, this can do this automatically.
 
 # Features Currently
-- It can send message to a specific phone number
+- It can send message to any contact
 
-- Sync contacts from phone
+- Schedule Messages to be sent on a specific date
 
 # Features that will be added
-- Schedule Messages on a specific date
-
 - Allow attachments/images to be sent with messages
 
 - Send notifications before schedule message is sent
