@@ -50,7 +50,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         contactNames = new ArrayList<>();
-        
+
         message = findViewById(R.id.editTextMessage);
         timePicker = findViewById(R.id.timePicker);
         datePicker = findViewById(R.id.datePicker);
@@ -87,7 +87,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @SuppressLint("Range")
-    public void sendSMS(View view) {
+    public void scheduleSMS(View view)
+    {
         String messageToSend = message.getText().toString();
         day = datePicker.getDayOfMonth();
         month = datePicker.getMonth();
@@ -113,25 +114,32 @@ public class MainActivity extends AppCompatActivity {
         }
         cursor.close();
 
-        // Get the time in milliseconds for the selected date and time
-        Calendar calendar = Calendar.getInstance();
-        calendar.set(year, month, day, hour, minute);
-        long timeInMillis = calendar.getTimeInMillis();
+        sendSMS(number, messageToSend, minute, hour, day, month, year);
 
-        // Schedule the SMS using the obtained phone number and message
-        Intent intent = new Intent(getApplicationContext(), SmsBroadcastReceiver.class);
-        intent.putExtra("phone", number);
-        intent.putExtra("message", messageToSend);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(getApplicationContext(), 0, intent,
-                PendingIntent.FLAG_MUTABLE);
-
-        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-        alarmManager.set(AlarmManager.RTC_WAKEUP, timeInMillis, pendingIntent);
-
-        Toast.makeText(getApplicationContext(),
-                "Message scheduled for " + day + "/" + (month + 1) + "/" + year + " at " + hour + ":" + minute,
-                Toast.LENGTH_LONG).show();
     }
+
+
+    private void sendSMS(String phoneNumber, String message, int minute, int hour, int day, int month, int year) {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED) {
+            Calendar calendar = Calendar.getInstance();
+            calendar.set(year, month, day, hour, minute);
+
+            Intent intent = new Intent(this, SmsBroadcastReceiver.class);
+            intent.putExtra("phone_number", phoneNumber);
+            intent.putExtra("message", message);
+
+            PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_IMMUTABLE);
+
+            AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+            alarmManager.setExact(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), pendingIntent);
+            Toast.makeText(getApplicationContext(),
+                    "Message scheduled for " + day + "/" + (month + 1) + "/" + year + " at " + hour + ":" + minute,
+                    Toast.LENGTH_LONG).show();
+        } else {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.SEND_SMS}, SMS_PERMISSION_CODE);
+        }
+    }
+
 
     public void pickContact(View view) {
         Intent pickContactIntent = new Intent(Intent.ACTION_PICK, ContactsContract.CommonDataKinds.Phone.CONTENT_URI);
