@@ -89,6 +89,7 @@ public class MainActivity extends AppCompatActivity {
     @SuppressLint("Range")
     public void scheduleSMS(View view)
     {
+        message = findViewById(R.id.editTextMessage);
         String messageToSend = message.getText().toString();
         day = datePicker.getDayOfMonth();
         month = datePicker.getMonth();
