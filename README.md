@@ -7,8 +7,10 @@ This app will help you schedule messages to be sent to your contacts on a specif
 # Features Currently
 - It can send message to any contact
 
+- Schedule Messages to be sent on a specific date (only if not restarted between)
+
 # Features that will be added
-- Schedule Messages to be sent on a specific date
+- Schedule Messages to be sent on a specific date (regardless if restarted)
 
 - Allow attachments/images to be sent with messages
 
