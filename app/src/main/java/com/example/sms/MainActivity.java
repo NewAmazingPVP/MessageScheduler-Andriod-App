@@ -32,7 +32,6 @@ public class MainActivity extends AppCompatActivity {
     private static final int SMS_PERMISSION_CODE = 123;
     private static final int CONTACTS_PERMISSION_CODE = 124;
     private static final int PICK_CONTACT_REQUEST = 1;
-    private EditText phoneNumberEditText;
     private EditText message;
     private List<String> contactNames;
     private Spinner contactSpinner;
@@ -55,7 +54,6 @@ public class MainActivity extends AppCompatActivity {
         timePicker = findViewById(R.id.timePicker);
         datePicker = findViewById(R.id.datePicker);
 
-        // Request the SEND_SMS permission at runtime if necessary
         if (ContextCompat.checkSelfPermission(this,
                 Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this,
@@ -72,7 +70,6 @@ public class MainActivity extends AppCompatActivity {
             cursor.close();
         }
 
-        // Request the READ_CONTACTS permission at runtime if necessary
         if (ContextCompat.checkSelfPermission(this,
                 Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this,
@@ -97,11 +94,9 @@ public class MainActivity extends AppCompatActivity {
         hour = timePicker.getCurrentHour();
         minute = timePicker.getCurrentMinute();
 
-        // Get the selected contact from the spinner
         String selectedContactName = (String) contactSpinner.getSelectedItem();
         String number = null;
 
-        // Query the Contacts content provider to retrieve the phone number of the selected contact
         Cursor cursor = getContentResolver().query(ContactsContract.Contacts.CONTENT_URI, null,
                 ContactsContract.Contacts.DISPLAY_NAME + " = ?", new String[]{selectedContactName}, null);
         if (cursor != null && cursor.moveToFirst()) {
@@ -133,9 +128,7 @@ public class MainActivity extends AppCompatActivity {
 
             AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
             alarmManager.setExact(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), pendingIntent);
-            Toast.makeText(getApplicationContext(),
-                    "Message scheduled for " + day + "/" + (month + 1) + "/" + year + " at " + hour + ":" + minute,
-                    Toast.LENGTH_LONG).show();
+            Toast.makeText(getApplicationContext(), "Message scheduled for " + day + "/" + (month + 1) + "/" + year + " at " + hour + ":" + minute, Toast.LENGTH_LONG).show();
         } else {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.SEND_SMS}, SMS_PERMISSION_CODE);
         }
@@ -179,8 +172,6 @@ public class MainActivity extends AppCompatActivity {
             if (cursor != null && cursor.moveToFirst()) {
                 int numberIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER);
                 String number = cursor.getString(numberIndex);
-
-                phoneNumberEditText.setText(number);
             }
 
             if (cursor != null) {
